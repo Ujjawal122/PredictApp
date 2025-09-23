@@ -7,6 +7,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Droplets, Activity, AlertTriangle, Users } from "lucide-react";
 import Link from "next/link";
 import axios from "axios";
+import { useRouter } from "next/navigation";
+
 
 // Animation Variants
 const containerVariant = {
@@ -16,25 +18,21 @@ const containerVariant = {
 
 const childVariant = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
 
+
 export default function HomePage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const router=useRouter();
 
   // ✅ Check auth status on mount
+
+
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        // If token is in localStorage
-        const token = localStorage.getItem("token");
-        if (!token) return setIsLoggedIn(false);
-
-        const res = await axios.get("/api/auth/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (res.data.loggedIn) setIsLoggedIn(true);
-        else setIsLoggedIn(false);
-      } catch (err) {
-        setIsLoggedIn(false);
+        const res = await axios.get("/api/auth/me");
+        setIsLoggedIn(res.data.authenticated);
+      } catch (error) {
+        console.error("Auth check failed:", error);
       }
     };
     checkAuth();
@@ -46,7 +44,7 @@ export default function HomePage() {
       await axios.post("/api/auth/logout", {}, { withCredentials: true });
       localStorage.removeItem("token");
       setIsLoggedIn(false);
-      window.location.href = "/"; // redirect to homepage
+     router.push('/')
     } catch (err) {
       console.error("Logout failed", err);
     }
