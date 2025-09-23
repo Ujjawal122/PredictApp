@@ -1,19 +1,25 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getDataFromToken } from "@/helpers/getDataFromUser";
-import {connectDB }from "@/lib/dbConnect";
-import User from "@/models/User";
+import { NextResponse } from "next/server";
+import jwt from "jsonwebtoken";
 
-export async function GET(request: NextRequest) {
+
+const SECRET = process.env.JWT_SECRET || "mysecret";
+
+export async function GET(req: Request) {
   try {
-    await connectDB();
-    const userId = getDataFromToken(request);
-    if (!userId) {
-      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+    const authHeader = req.headers.get("authorization");
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return NextResponse.json({ loggedIn: false }, { status: 401 });
     }
 
-    const user = await User.findById(userId).select("-password");
-    return NextResponse.json({ success: true, user });
-  } catch (error: any) {
-    return NextResponse.json({ success: false, message: error.message }, { status: 401 });
+    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, SECRET) as { id: string; email: string };
+
+    return NextResponse.json({
+      loggedIn: true,
+      user: { id: decoded.id, email: decoded.email },
+    });
+  } catch (err) {
+    return NextResponse.json({ loggedIn: false }, { status: 401 });
   }
 }
