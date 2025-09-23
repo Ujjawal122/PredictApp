@@ -1,13 +1,14 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Droplets, Activity, AlertTriangle, Users } from "lucide-react";
 import Link from "next/link";
+import axios from "axios";
 
-// ✅ Corrected Parent container variant
-// It only orchestrates the children's animations, avoiding the conflict.
+// ✅ Animation Variants
 const containerVariant = {
   hidden: {},
   visible: {
@@ -17,13 +18,43 @@ const containerVariant = {
   },
 };
 
-// Child animation (for each FeatureCard) remains the same
 const childVariant = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0 },
 };
 
 export default function HomePage() {
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  // ✅ Check if token/session is valid
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const res = await axios.get("/api/auth/me", {
+          withCredentials: true, // send cookies if any
+        });
+        if (res.status === 200) {
+          setIsLoggedIn(true);
+        } else {
+          setIsLoggedIn(false);
+        }
+      } catch (err) {
+        setIsLoggedIn(false);
+      }
+    };
+    checkAuth();
+  }, []);
+
+  // ✅ Handle logout
+  const handleLogout = async () => {
+    try {
+      await axios.post("/api/auth/logout", {}, { withCredentials: true });
+      setIsLoggedIn(false);
+    } catch (err) {
+      console.error("Logout failed", err);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 via-white to-blue-100 flex flex-col items-center justify-center px-6 py-12">
       {/* Hero Section */}
@@ -41,17 +72,26 @@ export default function HomePage() {
           India. Empowering communities with real-time alerts, AI-driven
           insights, and health awareness.
         </p>
+
+        {/* ✅ Dynamic Buttons */}
         <div className="mt-6 flex gap-4 justify-center">
           <Link href="/dashboard">
             <Button size="lg" className="bg-blue-700 hover:bg-blue-800">
               Go to Dashboard
             </Button>
           </Link>
-          <Link href="/signup">
-            <Button size="lg" variant="outline">
-             SignUp
+
+          {isLoggedIn ? (
+            <Button size="lg" variant="outline" onClick={handleLogout}>
+              Logout
             </Button>
-          </Link>
+          ) : (
+            <Link href="/login">
+              <Button size="lg" variant="outline">
+                Login
+              </Button>
+            </Link>
+          )}
         </div>
       </motion.div>
 

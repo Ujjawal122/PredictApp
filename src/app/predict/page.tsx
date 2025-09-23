@@ -108,19 +108,72 @@ export default function PredictPage() {
           )}
 
           {prediction && (
-            <div className="bg-green-100 text-green-800 p-4 rounded-lg mt-4">
-              <h2 className="font-semibold text-lg mb-2">Prediction Results:</h2>
-              <ul className="space-y-1">
-                <li>Diarrheal Cases: {prediction.Diarrheal_Cases}</li>
-                <li>Cholera Cases: {prediction.Cholera_Cases}</li>
-                <li>Typhoid Cases: {prediction.Typhoid_Cases}</li>
-                <li>Infant Mortality Rate: {prediction.Infant_Mortality_Rate}</li>
-                <li>Safe or UnSafe : {prediction.Safe_or_Unsafe}</li>
-                <li>Probability : {prediction.Probability_Unsafe}</li>
-                <li>Risk Level: {prediction.Risk_Level}</li>
-              </ul>
-            </div>
-          )}
+  <div className="bg-white border border-gray-200 p-6 rounded-2xl shadow-lg mt-6">
+    <h2 className="font-bold text-2xl mb-4 text-center text-blue-700">
+      📊 Prediction Results
+    </h2>
+
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <Card className="bg-blue-50 shadow-md">
+        <CardContent className="p-4 text-center">
+          <p className="text-lg font-semibold text-gray-700">Diarrheal Cases</p>
+          <p className="text-2xl font-bold text-blue-600">{prediction.Diarrheal_Cases}</p>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-cyan-50 shadow-md">
+        <CardContent className="p-4 text-center">
+          <p className="text-lg font-semibold text-gray-700">Cholera Cases</p>
+          <p className="text-2xl font-bold text-cyan-600">{prediction.Cholera_Cases}</p>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-green-50 shadow-md">
+        <CardContent className="p-4 text-center">
+          <p className="text-lg font-semibold text-gray-700">Typhoid Cases</p>
+          <p className="text-2xl font-bold text-green-600">{prediction.Typhoid_Cases}</p>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-orange-50 shadow-md">
+        <CardContent className="p-4 text-center">
+          <p className="text-lg font-semibold text-gray-700">Infant Mortality Rate</p>
+          <p className="text-2xl font-bold text-orange-600">{prediction.Infant_Mortality_Rate}</p>
+        </CardContent>
+      </Card>
+    </div>
+
+    {/* Risk summary */}
+    <div className="mt-6 p-6 rounded-xl shadow-md text-center 
+      bg-gradient-to-r from-green-100 via-yellow-100 to-red-100">
+      <p className="text-xl font-semibold text-gray-800">
+        Safe or Unsafe: 
+        <span className={`ml-2 font-bold ${
+          prediction.Safe_or_Unsafe === "Safe" ? "text-green-700" : "text-red-700"
+        }`}>
+          {prediction.Safe_or_Unsafe}
+        </span>
+      </p>
+
+      <p className="text-lg mt-2 text-gray-700">
+        Probability: <span className="font-bold text-indigo-700">{prediction.Probability_Unsafe}%</span>
+      </p>
+
+      <p className="text-lg mt-2 text-gray-700">
+        Risk Level: 
+        <span className={`ml-2 px-3 py-1 rounded-full text-white font-bold ${
+          prediction.Risk_Level === "High"
+            ? "bg-red-600"
+            : prediction.Risk_Level === "Medium"
+            ? "bg-yellow-500"
+            : "bg-green-600"
+        }`}>
+          {prediction.Risk_Level}
+        </span>
+      </p>
+    </div>
+  </div>
+)}
         </CardContent>
       </Card>
     </main>
