@@ -8,36 +8,31 @@ import { Droplets, Activity, AlertTriangle, Users } from "lucide-react";
 import Link from "next/link";
 import axios from "axios";
 
-// ✅ Animation Variants
+// Animation Variants
 const containerVariant = {
   hidden: {},
-  visible: {
-    transition: {
-      staggerChildren: 0.2,
-    },
-  },
+  visible: { transition: { staggerChildren: 0.2 } },
 };
 
-const childVariant = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 },
-};
+const childVariant = { hidden: { opacity: 0, y: 20 }, visible: { opacity: 1, y: 0 } };
 
 export default function HomePage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  // ✅ Check if token/session is valid
+  // ✅ Check auth status on mount
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        // If token is in localStorage
+        const token = localStorage.getItem("token");
+        if (!token) return setIsLoggedIn(false);
+
         const res = await axios.get("/api/auth/me", {
-          withCredentials: true, // send cookies if any
+          headers: { Authorization: `Bearer ${token}` },
         });
-        if (res.status === 200) {
-          setIsLoggedIn(true);
-        } else {
-          setIsLoggedIn(false);
-        }
+
+        if (res.data.loggedIn) setIsLoggedIn(true);
+        else setIsLoggedIn(false);
       } catch (err) {
         setIsLoggedIn(false);
       }
@@ -49,7 +44,9 @@ export default function HomePage() {
   const handleLogout = async () => {
     try {
       await axios.post("/api/auth/logout", {}, { withCredentials: true });
+      localStorage.removeItem("token");
       setIsLoggedIn(false);
+      window.location.href = "/"; // redirect to homepage
     } catch (err) {
       console.error("Logout failed", err);
     }
@@ -68,9 +65,8 @@ export default function HomePage() {
           Smart Community Health Monitoring
         </h1>
         <p className="mt-4 text-lg text-gray-600">
-          Early warning system for water-borne diseases in rural Northeast
-          India. Empowering communities with real-time alerts, AI-driven
-          insights, and health awareness.
+          Early warning system for water-borne diseases in rural Northeast India. Empowering
+          communities with real-time alerts, AI-driven insights, and health awareness.
         </p>
 
         {/* ✅ Dynamic Buttons */}
@@ -89,6 +85,15 @@ export default function HomePage() {
             <Link href="/login">
               <Button size="lg" variant="outline">
                 Login
+              </Button>
+            </Link>
+          )}
+
+          {/* Hide SignUp if logged in */}
+          {!isLoggedIn && (
+            <Link href="/signup">
+              <Button size="lg" variant="outline">
+                SignUp
               </Button>
             </Link>
           )}
@@ -127,21 +132,9 @@ export default function HomePage() {
   );
 }
 
-function FeatureCard({
-  icon,
-  title,
-  desc,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  desc: string;
-}) {
+function FeatureCard({ icon, title, desc }: { icon: React.ReactNode; title: string; desc: string }) {
   return (
-    <motion.div
-      variants={childVariant}
-      whileHover={{ scale: 1.05 }}
-      className="w-full h-full"
-    >
+    <motion.div variants={childVariant} whileHover={{ scale: 1.05 }} className="w-full h-full">
       <Card className="rounded-2xl shadow-lg hover:shadow-xl transition bg-white h-full flex flex-col">
         <CardHeader className="flex flex-col items-center">
           {icon}
