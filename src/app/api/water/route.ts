@@ -73,12 +73,23 @@ export async function GET() {
   try {
     await connectDB();
     const waterReports = await Water.find().sort({ createdAt: -1 });
-    return NextResponse.json({ reports: waterReports }, { status: 200 });
+
+    const transformed = waterReports.map(w => {
+      const issue: string[] = [];
+
+      if (w.phLevel < 6.5 || w.phLevel > 8.5) issue.push("pH level abnormal");
+      if (w.turbidity > 5) issue.push("High turbidity");
+      if (w.contamination && w.contamination !== "none") issue.push(`${w.contamination} contamination`);
+
+      return {
+        ...w.toObject(),
+        issue
+      };
+    });
+
+    return NextResponse.json({ reports: transformed }, { status: 200 });
   } catch (error: any) {
     console.error("Fetch water reports error:", error.message, error.stack);
-    return NextResponse.json(
-      { error: "Internal Server Error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

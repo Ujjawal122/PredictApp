@@ -25,7 +25,7 @@ interface HealthReport {
 interface WaterReport {
   reporter: string;
   location: string;
-  issue: string[];
+  issue?: string[];
   notes?: string;
   createdAt: string;
 }
@@ -39,26 +39,33 @@ export default function DashboardPage() {
     const fetchData = async () => {
       try {
         const [healthRes, waterRes] = await Promise.all([
-          axios.get("/api/reports"),
-          axios.get("/api/water"),
+          axios.get("/api/reports").catch(err => {
+            console.error("Health reports fetch failed:", err.response?.data || err);
+            return { data: { reports: [] } };
+          }),
+          axios.get("/api/water").catch(err => {
+            console.error("Water reports fetch failed:", err.response?.data || err);
+            return { data: { reports: [] } };
+          }),
         ]);
 
-        const healthReportsData = healthRes.data.reports || [];
-        const waterReportsData = waterRes.data.reports || [];
+        const healthReportsData: HealthReport[] = healthRes.data.reports || [];
+        const waterReportsData: WaterReport[] = waterRes.data.reports || [];
 
         setHealthReports(healthReportsData);
         setWaterReports(waterReportsData);
 
         const newAlerts: string[] = [];
-        if (healthReportsData.some((r: { symptoms: string | string[]; }) => r.symptoms.includes("Diarrhea"))) {
+        if (healthReportsData.some(r => r.symptoms?.includes("Diarrhea"))) {
           newAlerts.push("🚨 High number of diarrhea cases detected!");
         }
-        if (waterReportsData.some((r: { issue: string | string[]; }) => r.issue.includes("Dirty Water"))) {
+        if (waterReportsData.some(r => r.notes?.includes("Dirty Water"))) {
           newAlerts.push("⚠️ Unsafe water detected in some villages!");
         }
         setAlerts(newAlerts);
+
       } catch (err) {
-        console.error("Error fetching dashboard data:", err);
+        console.error("Unexpected dashboard fetch error:", err);
       }
     };
 
@@ -74,37 +81,23 @@ export default function DashboardPage() {
     { title: "At-Risk Villages", value: new Set([...healthReports.map(r => r.location), ...waterReports.map(r => r.location)]).size, icon: <Users className="w-6 h-6 text-purple-600" /> },
   ];
 
-  const combinedReports = [...healthReports.map(r => ({ type: 'health', data: r })), ...waterReports.map(r => ({ type: 'water', data: r }))].sort(
-    (a, b) => new Date(b.data.createdAt).getTime() - new Date(a.data.createdAt).getTime()
-  );
+  const combinedReports = [
+    ...healthReports.map(r => ({ type: 'health', data: r })),
+    ...waterReports.map(r => ({ type: 'water', data: r }))
+  ].sort((a, b) => new Date(b.data.createdAt).getTime() - new Date(a.data.createdAt).getTime());
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-100 to-green-50 p-6">
-      
+
       {/* Navbar */}
-     <nav className="flex justify-between items-center mb-8 p-4 bg-white/20 backdrop-blur-md rounded-xl shadow-none">
-  <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
-  <div className="flex gap-4">
-    <Link
-      href="/dashboard/report"
-      className="px-4 py-2 bg-blue-600 bg-opacity-80 text-white rounded hover:bg-blue-700 transition"
-    >
-      Health Reports
-    </Link>
-    <Link
-      href="/dashboard/water"
-      className="px-4 py-2 bg-teal-600 bg-opacity-80 text-white rounded hover:bg-teal-700 transition"
-    >
-      Water Reports
-    </Link>
-    <Link
-      href="/predict"
-      className="px-4 py-2 bg-teal-600 bg-opacity-80 text-white rounded hover:bg-teal-700 transition"
-    >
-      Prediction 
-    </Link>
-  </div>
-</nav>
+      <nav className="flex justify-between items-center mb-8 p-4 bg-white/20 backdrop-blur-md rounded-xl shadow-none">
+        <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
+        <div className="flex gap-4">
+          <Link href="/dashboard/report" className="px-4 py-2 bg-blue-600 bg-opacity-80 text-white rounded hover:bg-blue-700 transition">Health Reports</Link>
+          <Link href="/dashboard/water" className="px-4 py-2 bg-teal-600 bg-opacity-80 text-white rounded hover:bg-teal-700 transition">Water Reports</Link>
+          <Link href="/predict" className="px-4 py-2 bg-teal-600 bg-opacity-80 text-white rounded hover:bg-teal-700 transition">Prediction</Link>
+        </div>
+      </nav>
 
       <motion.h1 initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }} className="text-4xl font-bold mb-10 text-center text-gray-800">
         📊 Health & Water Monitoring Dashboard
@@ -148,13 +141,13 @@ export default function DashboardPage() {
                 <Separator className="my-2" />
                 <p className="flex items-center gap-2 text-sm text-gray-700">
                   <StickyNote className={`h-4 w-4 ${r.type === 'health' ? 'text-green-600' : 'text-cyan-600'}`} />
-                  {'symptoms' in r.data ? r.data.symptoms.join(", ") : r.data.issue.join(", ")}
+                  {'symptoms' in r.data ? r.data.symptoms.join(", ") : r.data.issue?.join(", ")}
                 </p>
                 <p className="flex items-center gap-2 text-sm text-gray-700"><Calendar className="h-4 w-4 text-purple-600" />{new Date(r.data.createdAt).toLocaleString()}</p>
                 <div className="flex flex-wrap gap-2 mt-2">
                   {'symptoms' in r.data
                     ? r.data.symptoms.map((s, i) => <Badge key={i} className="bg-red-100 text-red-700">{s}</Badge>)
-                    : r.data.issue.map((i2, j) => <Badge key={j} className="bg-cyan-100 text-cyan-700">{i2}</Badge>)
+                    : r.data.issue?.map((i2, j) => <Badge key={j} className="bg-cyan-100 text-cyan-700">{i2}</Badge>)
                   }
                 </div>
               </div>
