@@ -29,9 +29,10 @@ import {
 export default function WaterReportPage() {
   const [form, setForm] = useState({
     reporter: "",
-    phone: "",
     location: "",
-    issue: "",
+    phLevel:"",
+    turbidity:"",
+    contamination:"",
     notes: "",
   });
   const [reports, setReports] = useState<any[]>([]);
@@ -50,25 +51,30 @@ export default function WaterReportPage() {
   }, []);
 
   // Submit new report
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await axios.post("/api/water-reports", {
-        ...form,
-        issue: form.issue.split(",").map((s) => s.trim()),
-      });
-      alert("✅ Water report submitted!");
+const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
+  try {
+    await axios.post("/api/water", { ...form });
+    alert("✅ Water report submitted!");
 
-      // Refresh
-      const res = await axios.get("/api/water-reports");
-      setReports(res.data.reports || []);
+    // Refresh
+    const res = await axios.get("/api/water");
+    setReports(res.data.waterReports || []);
 
-      setForm({ reporter: "", phone: "", location: "", issue: "", notes: "" });
-    } catch (error) {
-      console.error("Submit error:", error);
-      alert("❌ Failed to submit report");
-    }
-  };
+    setForm({
+      reporter: "",
+      location: "",
+      notes: "",
+      contamination: "",
+      phLevel: "",
+      turbidity: ""
+    });
+  } catch (error) {
+    console.error("Submit error:", error);
+    alert("❌ Failed to submit report");
+  }
+};
+
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-cyan-100 to-green-50 p-8">
@@ -117,17 +123,6 @@ export default function WaterReportPage() {
                   />
                 </div>
                 <div>
-                  <Label>Phone</Label>
-                  <Input
-                    type="tel"
-                    value={form.phone}
-                    onChange={(e) =>
-                      setForm({ ...form, phone: e.target.value })
-                    }
-                    placeholder="Optional"
-                  />
-                </div>
-                <div>
                   <Label>Location</Label>
                   <Input
                     value={form.location}
@@ -139,13 +134,35 @@ export default function WaterReportPage() {
                   />
                 </div>
                 <div>
-                  <Label>Issue (comma separated)</Label>
+                  <Label>Turbidity</Label>
                   <Input
-                    value={form.issue}
+                    value={form.turbidity}
                     onChange={(e) =>
-                      setForm({ ...form, issue: e.target.value })
+                      setForm({ ...form, turbidity: e.target.value })
                     }
-                    placeholder="e.g. Dirty Water, Low Pressure"
+                    placeholder="eg. 8.6 or 5.5"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label>phLevel</Label>
+                  <Input
+                    value={form.phLevel}
+                    onChange={(e) =>
+                      setForm({ ...form, phLevel: e.target.value })
+                    }
+                    placeholder="e.g. 5 or 7"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label>contamination</Label>
+                  <Input
+                    value={form.contamination}
+                    onChange={(e) =>
+                      setForm({ ...form, contamination: e.target.value })
+                    }
+                    placeholder=" "
                     required
                   />
                 </div>
@@ -215,14 +232,8 @@ export default function WaterReportPage() {
                     <Separator className="my-2" />
 
                     <div className="grid gap-1 text-sm text-gray-700">
-                      <p className="flex items-center gap-2">
-                        <Phone className="h-4 w-4 text-blue-500" />
-                        {report.phone || "N/A"}
-                      </p>
-                      <p className="flex items-center gap-2">
-                        <Droplets className="h-4 w-4 text-cyan-600" />
-                        {report.issue?.join(", ") || "N/A"}
-                      </p>
+                     
+                      
                       <p className="flex items-center gap-2">
                         <StickyNote className="h-4 w-4 text-yellow-600" />
                         {report.notes || "N/A"}
