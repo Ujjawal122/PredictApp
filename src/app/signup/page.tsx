@@ -33,8 +33,8 @@ export default function SignupPage() {
       const res = await axios.post("/api/auth/signup", form);
 
       if (res.status === 201 || res.status === 200) {
-        alert("Signup successful! Please login.");
-        router.push("/login"); // redirect to login page
+        alert("Signup successful! Please Verify the email.");
+        router.push("/verify"); // redirect to login page
       }
     } catch (err: any) {
       alert(err.response?.data?.error || "Signup failed");

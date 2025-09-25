@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { useRouter } from "next/navigation";
 
 export default function VerifyPage() {
   const [email, setEmail] = useState("");
@@ -14,6 +15,7 @@ export default function VerifyPage() {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,17 +24,31 @@ export default function VerifyPage() {
     setError(null);
 
     try {
-      const res = await axios.post("/api/verify", { email, code });
+      const res = await axios.post(
+        "/api/auth/verify",
+        {
+          email: email.trim(),
+          code: code.trim(),
+        },
+        {
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
-      setMessage(res.data.message || "User verified successfully!");
-    } catch (err: any) {
-      if (err.response) {
-        // Server responded with an error
-        setError(err.response.data.error || "Verification failed");
+      const data = res.data;
+
+      if (data.message) {
+        setMessage(data.message);
+        // Delay slightly so user sees message before redirect
+        setTimeout(() => router.push("/login"), 1000);
       } else {
-        // Network or unexpected error
-        setError("Something went wrong. Try again.");
+        setError(data.error || "Verification failed. Please try again.");
       }
+    } catch (err: any) {
+      console.error("Verification API error:", err);
+      setError(err.response?.data?.error || "Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -85,6 +101,13 @@ export default function VerifyPage() {
               </motion.div>
             </form>
 
+            <p className="mt-4 text-sm text-gray-400 text-center">
+              Skip{" "}
+              <a href="/login" className="text-purple-400 hover:underline">
+                Login
+              </a>
+            </p>
+
             {message && (
               <motion.p
                 initial={{ opacity: 0 }}
@@ -94,6 +117,7 @@ export default function VerifyPage() {
                 {message}
               </motion.p>
             )}
+
             {error && (
               <motion.p
                 initial={{ opacity: 0 }}
