@@ -1,44 +1,30 @@
+
+
+
+// /api/auth/login.ts
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/dbConnect";
 import User from "@/models/User";
-import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-export async function POST(request: NextRequest) {
+export async function POST(req: NextRequest) {
   try {
     await connectDB();
-    const { email, password } = await request.json(); 
+    const { email, password } = await req.json();
 
     const user = await User.findOne({ email });
-    if (!user) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
-    }
+    if (!user) return NextResponse.json({ error: "User not found" }, { status: 404 });
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return NextResponse.json(
-        { error: "Invalid password or email" },
-        { status: 400 }
-      );
-    }
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) return NextResponse.json({ error: "Invalid email or password" }, { status: 400 });
 
-    const tokenData = {
-      id: user._id,
-      email: user.email,
-      role: user.role,
-    };
-
-    const token = jwt.sign(tokenData, process.env.JWT_KEY!, {
-      expiresIn: "1d",
-    });
-
-    const response = NextResponse.json(
-      {
-        message: "Login successful",
-        role: user.role,
-      },
-      { status: 200 }
+    const token = jwt.sign(
+      { id: user._id.toString(), email: user.email, role: user.role },
+      process.env.JWT_KEY!,
+      { expiresIn: "1d" }
     );
+
+    const response = NextResponse.json({ message: "Login successful", role: user.role }, { status: 200 });
 
     response.cookies.set("token", token, {
       httpOnly: true,
@@ -49,8 +35,8 @@ export async function POST(request: NextRequest) {
     });
 
     return response;
-  } catch (error: any) {
-    console.error("Login error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+  } catch (err: any) {
+    console.error("Login error:", err);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

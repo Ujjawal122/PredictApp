@@ -12,22 +12,30 @@ import Link from "next/link";
 
 export default function LoginPage() {
   const [form, setForm] = useState({ email: "", password: "" });
+  const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  try {
-    const res = await axios.post("/api/auth/login", form);
-    const data = res.data;
-    router.push('/dashboard')
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
 
-  
-  } catch (err: any) {
-    alert(err.response?.data?.error || "Login failed");
-  }
-};
+    try {
+      const res = await axios.post("/api/auth/login", form, {
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = res.data;
 
-
+      // ✅ Redirect based on role
+      router.push('/dashboard')
+     
+    } catch (err: any) {
+      setError(err.response?.data?.error || "Login failed. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <motion.div
@@ -53,7 +61,9 @@ export default function LoginPage() {
                 <Input
                   type="email"
                   placeholder="Enter your email"
+                  value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
+                  required
                 />
               </div>
               <div>
@@ -61,25 +71,42 @@ export default function LoginPage() {
                 <Input
                   type="password"
                   placeholder="Enter your password"
+                  value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
+                  required
                 />
               </div>
-              <Button className="w-full" type="submit"
-              onClick={handleSubmit}
-              >
-                Login
-              </Button>
+              <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}>
+                <Button className="w-full" type="submit" disabled={loading}>
+                  {loading ? "Logging in..." : "Login"}
+                </Button>
+              </motion.div>
             </form>
+
+            {error && (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="mt-4 text-center text-red-600"
+              >
+                {error}
+              </motion.p>
+            )}
+
             <p className="text-center text-gray-400 text-sm mt-6">
               New user?{" "}
-              <Link
-                href="/signup"
-                className="text-purple-400 hover:underline"
-              >
+              <Link href="/signup" className="text-purple-400 hover:underline">
                 Sign up here
               </Link>
             </p>
-             
+            <p className="text-center text-gray-400 text-sm mt-2">
+              <Link
+                href="/forgetpassword"
+                className="text-blue-400 hover:underline"
+              >
+                Forgot password?
+              </Link>
+            </p>
           </CardContent>
         </Card>
       </motion.div>
