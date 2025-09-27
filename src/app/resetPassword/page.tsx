@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useRouter, useSearchParams } from "next/navigation";
 
-export default function ResetPasswordPage() {
+export default function ResetPasswordForm() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -21,7 +21,9 @@ export default function ResetPasswordPage() {
   const router = useRouter();
 
   useEffect(() => {
-    if (!token) setError("Invalid or missing token");
+    if (!token) {
+      setError("Invalid or missing token");
+    }
   }, [token]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -36,7 +38,11 @@ export default function ResetPasswordPage() {
     setError(null);
 
     try {
-      const res = await axios.post("/api/resetPassword", { token, newPassword });
+      const res = await axios.post("/api/resetPassword", {
+        token,
+        newPassword,
+      });
+
       setMessage(res.data.message || "Password reset successful!");
       setTimeout(() => router.push("/login"), 1500);
     } catch (err: any) {
@@ -93,8 +99,25 @@ export default function ResetPasswordPage() {
               </motion.div>
             </form>
 
-            {message && <p className="mt-4 text-green-600 text-center">{message}</p>}
-            {error && <p className="mt-4 text-red-600 text-center">{error}</p>}
+            {message && (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="mt-4 text-green-600 text-center"
+              >
+                {message}
+              </motion.p>
+            )}
+
+            {error && (
+              <motion.p
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="mt-4 text-red-600 text-center"
+              >
+                {error}
+              </motion.p>
+            )}
           </CardContent>
         </Card>
       </motion.div>
