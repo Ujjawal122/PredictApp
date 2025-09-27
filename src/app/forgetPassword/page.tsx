@@ -8,12 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 
+import { useRouter } from "next/navigation";
+
 export default function ForgetPasswordPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-
+  const router=useRouter()
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -24,6 +26,7 @@ export default function ForgetPasswordPage() {
       const res = await axios.post("/api/forgetPassword", { email });
 
       setMessage(res.data.message || "Password reset link sent!");
+      router.push('/resetPassword')
     } catch (err: any) {
       setError(err.response?.data?.error || "Something went wrong. Try again.");
     } finally {
